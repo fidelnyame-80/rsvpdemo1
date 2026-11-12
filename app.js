@@ -69,6 +69,7 @@ if(window.gsap&&window.ScrollTrigger){
   enter('.story-photo',{x:-100,y:45,rotation:-9},{rotation:-2});
   enter('.story-copy>.eyebrow,.story-copy>h2',{x:85,y:12});
   enter('.story-copy>p:not(.eyebrow)',{x:65,y:15});
+  enter('.paper-note',{x:-60,y:35,rotation:-7},{rotation:-2});
   enter('.handwritten-note',{x:90,y:50,rotation:9},{rotation:2});
   enter('.rsvp-intro>.eyebrow,.rsvp-intro>h2,.rsvp-intro>p',{x:-75,y:15});
   enter('.rsvp-keepsake',{x:-100,y:55,rotation:-14},{rotation:-4,duration:1.4});
