@@ -51,7 +51,8 @@ if(window.gsap&&window.ScrollTrigger&&window.MorphSVGPlugin){
    .to('#hero-morph-image',{attr:{x,y,width:size,height:size},duration:1},0)
    .to(hero,{'--morph':1,'--hero-ink':'rgb(48,57,45)',duration:1},0)
    .to('.hero-copy',{opacity:0,duration:.18},0)
-   .to('.hero-copy',{opacity:1,duration:.3},.7);
+   .to('.hero-copy',{opacity:1,duration:.3},.7)
+   .fromTo('.opening-note',{autoAlpha:0,y:35,rotation:-10},{autoAlpha:1,y:0,rotation:-5,duration:.28},.72);
   return ()=>timeline.kill();
  });
  window.addEventListener('load',()=>ScrollTrigger.refresh());
