@@ -58,17 +58,34 @@ if(window.gsap&&window.ScrollTrigger&&window.MorphSVGPlugin){
  window.addEventListener('hashchange',()=>requestAnimationFrame(()=>ScrollTrigger.refresh()));
 }else{heroPhoto.innerHTML='<img src="assets/hero.webp" alt="Setor and Eunice smiling together">';}
 
-// Subtle editorial motion follows viewport position instead of playing on a timer.
-const motionTargets=[...document.querySelectorAll('.story-copy,.story-photo,.rsvp-intro,#rsvp-form,.section-divider')];
-motionTargets.forEach(el=>el.classList.add('reveal'));
-let editorialFrame=0;
-function drawEditorialMotion(){
- editorialFrame=0;
- const height=window.innerHeight;
- const reduced=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
- motionTargets.forEach(el=>{const rect=el.getBoundingClientRect();const progress=reduced?1:Math.max(0,Math.min(1,(height-rect.top)/(height*.48)));el.style.setProperty('--reveal',progress.toFixed(4));el.style.setProperty('--draw-progress',progress.toFixed(4));el.style.setProperty('--ink-progress',progress.toFixed(4))});
- const keepsake=document.querySelector('.rsvp-keepsake');if(keepsake){const rect=keepsake.getBoundingClientRect();keepsake.style.setProperty('--photo-drift',reduced?'0px':`${Math.max(-16,Math.min(16,(rect.top-height/2)*.035))}px`)}
- const photoBreak=document.querySelector('.photo-break');if(photoBreak){const rect=photoBreak.getBoundingClientRect();const progress=Math.max(0,Math.min(1,(height-rect.top)/(height+rect.height)));photoBreak.style.setProperty('--image-scale',reduced?'1':(1.12-progress*.12).toFixed(4))}
+// GSAP ScrollTrigger entrance choreography; no timer-based auto-play.
+if(window.gsap&&window.ScrollTrigger){
+ gsap.registerPlugin(ScrollTrigger);
+ const mm=gsap.matchMedia();
+ mm.add('(prefers-reduced-motion: no-preference)',()=>{
+  const enter=(selector,from,extra={})=>gsap.utils.toArray(selector).forEach(el=>{
+   gsap.fromTo(el,{...from,autoAlpha:0},{x:0,y:0,rotation:0,autoAlpha:1,duration:1.15,ease:'power3.out',...extra,scrollTrigger:{trigger:el,start:'top 92%',end:'top 48%',toggleActions:'play none none reverse'}});
+  });
+  enter('.story-photo',{x:-100,y:45,rotation:-9},{rotation:-2});
+  enter('.story-copy>.eyebrow,.story-copy>h2',{x:85,y:12});
+  enter('.story-copy>p:not(.eyebrow)',{x:65,y:15});
+  enter('.handwritten-note',{x:90,y:50,rotation:9},{rotation:2});
+  enter('.rsvp-intro>.eyebrow,.rsvp-intro>h2,.rsvp-intro>p',{x:-75,y:15});
+  enter('.rsvp-keepsake',{x:-100,y:55,rotation:-14},{rotation:-4,duration:1.4});
+  enter('#rsvp-form',{x:95,y:30,rotation:3});
+  enter('.photo-break>div',{x:-100,y:30});
+  gsap.utils.toArray('.sketch-heart,.botanical-art,.orbit-art,.section-divider svg').forEach(svg=>{
+   gsap.fromTo(svg,{autoAlpha:0,rotation:-12,y:25},{autoAlpha:1,rotation:0,y:0,duration:1,scrollTrigger:{trigger:svg,start:'top 93%',toggleActions:'play none none reverse'}});
+   svg.querySelectorAll('path,circle,ellipse').forEach(path=>{
+    const length=path.getTotalLength();gsap.set(path,{strokeDasharray:length,strokeDashoffset:length});
+    gsap.to(path,{strokeDashoffset:0,ease:'none',scrollTrigger:{trigger:svg,start:'top 90%',end:'top 40%',scrub:.5}});
+   });
+  });
+  gsap.utils.toArray('.partial-underline').forEach(el=>gsap.fromTo(el,{'--ink-progress':0},{'--ink-progress':1,scrollTrigger:{trigger:el,start:'top 90%',end:'top 55%',scrub:.35}}));
+  const photo=document.querySelector('.photo-break img');
+  gsap.fromTo(photo,{scale:1.15,yPercent:-6},{scale:1,yPercent:6,ease:'none',scrollTrigger:{trigger:'.photo-break',start:'top bottom',end:'bottom top',scrub:.6}});
+  gsap.to('.orbit-art',{rotation:35,ease:'none',scrollTrigger:{trigger:'.countdown',start:'top bottom',end:'bottom top',scrub:1}});
+  return ()=>{};
+ });
+ document.fonts.ready.then(()=>ScrollTrigger.refresh());
 }
-function scheduleEditorialMotion(){if(!editorialFrame)editorialFrame=requestAnimationFrame(drawEditorialMotion)}
-window.addEventListener('scroll',scheduleEditorialMotion,{passive:true});window.addEventListener('resize',scheduleEditorialMotion,{passive:true});window.addEventListener('hashchange',scheduleEditorialMotion);window.addEventListener('pageshow',scheduleEditorialMotion);drawEditorialMotion();
