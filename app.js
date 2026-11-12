@@ -15,37 +15,60 @@ document.querySelector('#another').addEventListener('click',()=>{document.queryS
 document.querySelector('#export').addEventListener('click',()=>{const safe=value=>'"'+String(value??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"';const rows=[['Name','Attendance','Guests','Message','Source'],...all().map(x=>[x.name,x.attendance==='yes'?'Attending':'Declined',x.guests,x.message,x.sample?'Sample':'Browser submission'])];const blob=new Blob(['\uFEFF'+rows.map(row=>row.map(safe).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='setor-eunice-rsvps.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);document.querySelector('#dash-status').textContent='Guest list exported.'});
 function countdown(){const seconds=Math.max(0,Math.floor((new Date('2027-02-20T13:00:00Z')-Date.now())/1000));const values=[Math.floor(seconds/86400),Math.floor(seconds/3600)%24,Math.floor(seconds/60)%60,seconds%60];const root=document.querySelector('#countdown');root.replaceChildren();['DAYS','HOURS','MINUTES','SECONDS'].forEach((label,i)=>{const item=text('div','');item.append(text('strong',String(values[i]).padStart(2,'0')),text('span',label));root.append(item)})}countdown();setInterval(countdown,1000);
 
-// A single scroll-scrubbed shape: rectangle at 0px, heart at 300px.
-// Equal point counts make every intermediate outline continuous in both directions.
+// SVG morphing uses GSAP MorphSVG + ScrollTrigger's documented scrub pattern.
+// Upstream: https://github.com/greensock/GSAP (see vendor/LICENSE-GSAP.txt).
 const hero=document.querySelector('.hero');
 const heroPhoto=document.querySelector('.hero-photo');
-const heartCurves=[
- [[.5,.14],[.22,-.12],[-.12,.14],[.08,.43]],
- [[.08,.43],[.18,.61],[.38,.80],[.5,.94]],
- [[.5,.94],[.62,.80],[.82,.61],[.92,.43]],
- [[.92,.43],[1.12,.14],[.78,-.12],[.5,.14]]
-];
-const rectangleStops=[[[.5,0],[0,0],[0,.5]],[[0,.5],[0,1],[.5,1]],[[.5,1],[1,1],[1,.5]],[[1,.5],[1,0],[.5,0]]];
-const morphPoints=heartCurves.flatMap((curve,segment)=>Array.from({length:40},(_,i)=>{
- const t=i/40,u=1-t;const heart=[0,1].map(axis=>u*u*u*curve[0][axis]+3*u*u*t*curve[1][axis]+3*u*t*t*curve[2][axis]+t*t*t*curve[3][axis]);
- const stops=rectangleStops[segment],part=t<.5?0:1,f=t<.5?t*2:(t-.5)*2;
- return {heart,rectangle:[0,1].map(axis=>stops[part][axis]+(stops[part+1][axis]-stops[part][axis])*f)};
-}));
-let morphFrame=0;
-function drawHeroMorph(){
- morphFrame=0;
- const p=Math.max(0,Math.min(1,window.scrollY/300));
- const mobile=window.matchMedia('(max-width:700px)').matches;
- hero.style.setProperty('--morph',p.toFixed(4));
- const ink=[48,57,45].map(value=>Math.round(255+(value-255)*p));
- hero.style.setProperty('--hero-ink',`rgb(${ink.join(',')})`);
- heroPhoto.style.clipPath=`polygon(${morphPoints.map(({heart,rectangle})=>[0,1].map(axis=>((rectangle[axis]+(heart[axis]-rectangle[axis])*p)*100).toFixed(3)+'%').join(' ')).join(',')})`;
- // The opening frame fills the screen, then settles beside (or above) the names.
- const end=mobile?[1,5,43,5]:[8,4,10,48];
- heroPhoto.style.inset=end.map(value=>(value*p).toFixed(3)+'%').join(' ');
+const svgNS='http://www.w3.org/2000/svg';
+const heroSVG=document.createElementNS(svgNS,'svg');
+heroSVG.setAttribute('class','hero-morph-svg');
+heroSVG.setAttribute('role','img');heroSVG.setAttribute('aria-label','Setor and Eunice smiling together');
+heroSVG.innerHTML='<defs><clipPath id="hero-morph-mask" clipPathUnits="userSpaceOnUse"><path id="hero-morph-path"/></clipPath></defs><image id="hero-morph-image" href="assets/hero.webp" preserveAspectRatio="xMidYMin slice" clip-path="url(#hero-morph-mask)"/>';
+heroPhoto.replaceChildren(heroSVG);
+if(window.gsap&&window.ScrollTrigger&&window.MorphSVGPlugin){
+ gsap.registerPlugin(ScrollTrigger,MorphSVGPlugin);
+ const media=gsap.matchMedia();
+ media.add({mobile:'(max-width:700px)',desktop:'(min-width:701px)',reduced:'(prefers-reduced-motion:reduce)'},context=>{
+  const {mobile,reduced}=context.conditions;
+  const stage=document.querySelector('.hero-stage');
+  const w=stage.clientWidth,h=stage.clientHeight;
+  heroSVG.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  const size=mobile?Math.min(w*.96,h*.51):Math.min(w*.48,h*.85);
+  const x=mobile?(w-size)/2:w*.51+(w*.46-size)/2;
+  const y=mobile?18:(h-size)/2;
+  const pt=(a,b)=>`${(x+a*size).toFixed(2)} ${(y+b*size).toFixed(2)}`;
+  const curves=[[[.5,.19],[.24,-.06],[-.08,.12],[.06,.41]],[[.06,.41],[.14,.60],[.37,.80],[.5,.94]],[[.5,.94],[.63,.80],[.86,.60],[.94,.41]],[[.94,.41],[1.08,.12],[.76,-.06],[.5,.19]]];
+  const mid=(a,b)=>a.map((v,i)=>(v+b[i])/2);
+  const halves=curves.flatMap(([a,b,c,d])=>{const ab=mid(a,b),bc=mid(b,c),cd=mid(c,d),abc=mid(ab,bc),bcd=mid(bc,cd),center=mid(abc,bcd);return [[a,ab,abc,center],[center,bcd,cd,d]]});
+  const heart='M'+pt(...halves[0][0])+halves.map(curve=>' C'+curve.slice(1).map(point=>pt(...point)).join(' ')).join('')+' Z';
+  const corners=[[w/2,0],[0,0],[0,h/2],[0,h],[w/2,h],[w,h],[w,h/2],[w,0],[w/2,0]];
+  const rectangle='M'+corners[0].join(' ')+corners.slice(1).map((b,i)=>{const a=corners[i];const point=t=>a.map((v,k)=>v+(b[k]-v)*t).join(' ');return ' C'+point(1/3)+' '+point(2/3)+' '+b.join(' ')}).join('')+' Z';
+  gsap.set('#hero-morph-path',{attr:{d:rectangle}});
+  gsap.set('#hero-morph-image',{attr:{x:0,y:0,width:w,height:h}});
+  gsap.set(hero,{'--morph':0,'--hero-ink':'rgb(255,255,255)'});
+  const timeline=gsap.timeline({defaults:{ease:'none'},scrollTrigger:{trigger:hero,start:'top top',end:'+=300',scrub:reduced?true:.35,invalidateOnRefresh:true}});
+  timeline.to('#hero-morph-path',{morphSVG:{shape:heart,type:'linear',shapeIndex:0},duration:1},0)
+   .to('#hero-morph-image',{attr:{x,y,width:size,height:size},duration:1},0)
+   .to(hero,{'--morph':1,'--hero-ink':'rgb(48,57,45)',duration:1},0)
+   .to('.hero-copy',{opacity:0,duration:.18},0)
+   .to('.hero-copy',{opacity:1,duration:.3},.7);
+  return ()=>timeline.kill();
+ });
+ window.addEventListener('load',()=>ScrollTrigger.refresh());
+ window.addEventListener('hashchange',()=>requestAnimationFrame(()=>ScrollTrigger.refresh()));
+}else{heroPhoto.innerHTML='<img src="assets/hero.webp" alt="Setor and Eunice smiling together">';}
+
+// Subtle editorial motion follows viewport position instead of playing on a timer.
+const motionTargets=[...document.querySelectorAll('.story-copy,.story-photo,.rsvp-intro,#rsvp-form,.section-divider')];
+motionTargets.forEach(el=>el.classList.add('reveal'));
+let editorialFrame=0;
+function drawEditorialMotion(){
+ editorialFrame=0;
+ const height=window.innerHeight;
+ const reduced=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+ motionTargets.forEach(el=>{const rect=el.getBoundingClientRect();const progress=reduced?1:Math.max(0,Math.min(1,(height-rect.top)/(height*.48)));el.style.setProperty('--reveal',progress.toFixed(4));el.style.setProperty('--draw-progress',progress.toFixed(4));el.style.setProperty('--ink-progress',progress.toFixed(4))});
+ const keepsake=document.querySelector('.rsvp-keepsake');if(keepsake){const rect=keepsake.getBoundingClientRect();keepsake.style.setProperty('--photo-drift',reduced?'0px':`${Math.max(-16,Math.min(16,(rect.top-height/2)*.035))}px`)}
+ const photoBreak=document.querySelector('.photo-break');if(photoBreak){const rect=photoBreak.getBoundingClientRect();const progress=Math.max(0,Math.min(1,(height-rect.top)/(height+rect.height)));photoBreak.style.setProperty('--image-scale',reduced?'1':(1.12-progress*.12).toFixed(4))}
 }
-function scheduleHeroMorph(){if(!morphFrame)morphFrame=requestAnimationFrame(drawHeroMorph)}
-window.addEventListener('scroll',scheduleHeroMorph,{passive:true});
-window.addEventListener('resize',scheduleHeroMorph,{passive:true});
-window.addEventListener('pageshow',scheduleHeroMorph);
-drawHeroMorph();
+function scheduleEditorialMotion(){if(!editorialFrame)editorialFrame=requestAnimationFrame(drawEditorialMotion)}
+window.addEventListener('scroll',scheduleEditorialMotion,{passive:true});window.addEventListener('resize',scheduleEditorialMotion,{passive:true});window.addEventListener('hashchange',scheduleEditorialMotion);window.addEventListener('pageshow',scheduleEditorialMotion);drawEditorialMotion();
