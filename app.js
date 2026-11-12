@@ -74,7 +74,7 @@ if(window.gsap&&window.ScrollTrigger){
   enter('.rsvp-keepsake',{x:-100,y:55,rotation:-14},{rotation:-4,duration:1.4});
   enter('#rsvp-form',{x:95,y:30,rotation:3});
   enter('.photo-break>div',{x:-100,y:30});
-  gsap.utils.toArray('.sketch-heart,.botanical-art,.orbit-art,.section-divider svg').forEach(svg=>{
+  gsap.utils.toArray('.sketch-heart,.botanical-art,.orbit-art,.section-divider svg,.floral-corner,.ribbon-art').forEach(svg=>{
    gsap.fromTo(svg,{autoAlpha:0,rotation:-12,y:25},{autoAlpha:1,rotation:0,y:0,duration:1,scrollTrigger:{trigger:svg,start:'top 93%',toggleActions:'play none none reverse'}});
    svg.querySelectorAll('path,circle,ellipse').forEach(path=>{
     const length=path.getTotalLength();gsap.set(path,{strokeDasharray:length,strokeDashoffset:length});

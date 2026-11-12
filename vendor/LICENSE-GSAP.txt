@@ -1,8 +1,0 @@
-GSAP 3.13.0, ScrollTrigger and MorphSVGPlugin
-Copyright (c) GreenSock. All rights reserved.
-Original distribution licence headers are retained in each JavaScript file.
-Source: https://github.com/greensock/GSAP
-License: https://gsap.com/standard-license/
-Documentation examples adapted from:
-https://gsap.com/docs/v3/Plugins/MorphSVGPlugin/
-https://gsap.com/docs/v3/Plugins/ScrollTrigger/
