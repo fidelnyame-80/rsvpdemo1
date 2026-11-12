@@ -14,3 +14,38 @@ document.querySelector('#name').addEventListener('input',event=>event.target.set
 document.querySelector('#another').addEventListener('click',()=>{document.querySelector('#success').hidden=true;const form=document.querySelector('#rsvp-form');form.reset();form.hidden=false;document.querySelector('#guest-field').hidden=false;document.querySelector('#name').focus()});
 document.querySelector('#export').addEventListener('click',()=>{const safe=value=>'"'+String(value??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"';const rows=[['Name','Attendance','Guests','Message','Source'],...all().map(x=>[x.name,x.attendance==='yes'?'Attending':'Declined',x.guests,x.message,x.sample?'Sample':'Browser submission'])];const blob=new Blob(['\uFEFF'+rows.map(row=>row.map(safe).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='setor-eunice-rsvps.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);document.querySelector('#dash-status').textContent='Guest list exported.'});
 function countdown(){const seconds=Math.max(0,Math.floor((new Date('2027-02-20T13:00:00Z')-Date.now())/1000));const values=[Math.floor(seconds/86400),Math.floor(seconds/3600)%24,Math.floor(seconds/60)%60,seconds%60];const root=document.querySelector('#countdown');root.replaceChildren();['DAYS','HOURS','MINUTES','SECONDS'].forEach((label,i)=>{const item=text('div','');item.append(text('strong',String(values[i]).padStart(2,'0')),text('span',label));root.append(item)})}countdown();setInterval(countdown,1000);
+
+// A single scroll-scrubbed shape: rectangle at 0px, heart at 300px.
+// Equal point counts make every intermediate outline continuous in both directions.
+const hero=document.querySelector('.hero');
+const heroPhoto=document.querySelector('.hero-photo');
+const heartCurves=[
+ [[.5,.14],[.22,-.12],[-.12,.14],[.08,.43]],
+ [[.08,.43],[.18,.61],[.38,.80],[.5,.94]],
+ [[.5,.94],[.62,.80],[.82,.61],[.92,.43]],
+ [[.92,.43],[1.12,.14],[.78,-.12],[.5,.14]]
+];
+const rectangleStops=[[[.5,0],[0,0],[0,.5]],[[0,.5],[0,1],[.5,1]],[[.5,1],[1,1],[1,.5]],[[1,.5],[1,0],[.5,0]]];
+const morphPoints=heartCurves.flatMap((curve,segment)=>Array.from({length:40},(_,i)=>{
+ const t=i/40,u=1-t;const heart=[0,1].map(axis=>u*u*u*curve[0][axis]+3*u*u*t*curve[1][axis]+3*u*t*t*curve[2][axis]+t*t*t*curve[3][axis]);
+ const stops=rectangleStops[segment],part=t<.5?0:1,f=t<.5?t*2:(t-.5)*2;
+ return {heart,rectangle:[0,1].map(axis=>stops[part][axis]+(stops[part+1][axis]-stops[part][axis])*f)};
+}));
+let morphFrame=0;
+function drawHeroMorph(){
+ morphFrame=0;
+ const p=Math.max(0,Math.min(1,window.scrollY/300));
+ const mobile=window.matchMedia('(max-width:700px)').matches;
+ hero.style.setProperty('--morph',p.toFixed(4));
+ const ink=[48,57,45].map(value=>Math.round(255+(value-255)*p));
+ hero.style.setProperty('--hero-ink',`rgb(${ink.join(',')})`);
+ heroPhoto.style.clipPath=`polygon(${morphPoints.map(({heart,rectangle})=>[0,1].map(axis=>((rectangle[axis]+(heart[axis]-rectangle[axis])*p)*100).toFixed(3)+'%').join(' ')).join(',')})`;
+ // The opening frame fills the screen, then settles beside (or above) the names.
+ const end=mobile?[1,5,43,5]:[8,4,10,48];
+ heroPhoto.style.inset=end.map(value=>(value*p).toFixed(3)+'%').join(' ');
+}
+function scheduleHeroMorph(){if(!morphFrame)morphFrame=requestAnimationFrame(drawHeroMorph)}
+window.addEventListener('scroll',scheduleHeroMorph,{passive:true});
+window.addEventListener('resize',scheduleHeroMorph,{passive:true});
+window.addEventListener('pageshow',scheduleHeroMorph);
+drawHeroMorph();
