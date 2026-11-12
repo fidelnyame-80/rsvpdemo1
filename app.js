@@ -83,7 +83,7 @@ if(window.gsap&&window.ScrollTrigger){
   });
   gsap.utils.toArray('.partial-underline').forEach(el=>gsap.fromTo(el,{'--ink-progress':0},{'--ink-progress':1,scrollTrigger:{trigger:el,start:'top 90%',end:'top 55%',scrub:.35}}));
   const photo=document.querySelector('.photo-break img');
-  gsap.fromTo(photo,{scale:1.15,yPercent:-6},{scale:1,yPercent:6,ease:'none',scrollTrigger:{trigger:'.photo-break',start:'top bottom',end:'bottom top',scrub:.6}});
+  if(photo)gsap.fromTo(photo,{scale:1.15,yPercent:-6},{scale:1,yPercent:6,ease:'none',scrollTrigger:{trigger:'.photo-break',start:'top bottom',end:'bottom top',scrub:.6}});
   gsap.to('.orbit-art',{rotation:35,ease:'none',scrollTrigger:{trigger:'.countdown',start:'top bottom',end:'bottom top',scrub:1}});
   return ()=>{};
  });
