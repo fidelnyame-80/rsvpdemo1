@@ -51,8 +51,7 @@ if(window.gsap&&window.ScrollTrigger&&window.MorphSVGPlugin){
    .to('#hero-morph-image',{attr:{x,y,width:size,height:size},duration:1},0)
    .to(hero,{'--morph':1,'--hero-ink':'rgb(48,57,45)',duration:1},0)
    .to('.hero-copy',{opacity:0,duration:.18},0)
-   .to('.hero-copy',{opacity:1,duration:.3},.7)
-   .fromTo('.opening-note',{autoAlpha:0,y:35,rotation:-10},{autoAlpha:1,y:0,rotation:-5,duration:.28},.72);
+   .to('.hero-copy',{opacity:1,duration:.3},.7);
   return ()=>timeline.kill();
  });
  window.addEventListener('load',()=>ScrollTrigger.refresh());
@@ -70,6 +69,7 @@ if(window.gsap&&window.ScrollTrigger){
   enter('.story-photo',{x:-100,y:45,rotation:-9},{rotation:-2});
   enter('.story-copy>.eyebrow,.story-copy>h2',{x:85,y:12});
   enter('.story-copy>p:not(.eyebrow)',{x:65,y:15});
+  enter('.opening-note',{x:-45,y:25,rotation:-6},{rotation:-2});
   enter('.paper-note',{x:-60,y:35,rotation:-7},{rotation:-2});
   enter('.handwritten-note',{x:90,y:50,rotation:9},{rotation:2});
   enter('.rsvp-intro>.eyebrow,.rsvp-intro>h2,.rsvp-intro>p',{x:-75,y:15});
