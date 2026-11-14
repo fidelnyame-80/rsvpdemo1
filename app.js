@@ -17,7 +17,18 @@ function countdown(){const seconds=Math.max(0,Math.floor((new Date('2027-02-20T1
 
 // The hero is a large, static heart: no morph, pinning, or scroll timeline.
 const heroPhoto=document.querySelector('.hero-photo');
-heroPhoto.innerHTML=`<svg class="hero-heart-svg" viewBox="0 0 1000 1000" role="img" aria-label="Setor and Eunice smiling together"><defs><clipPath id="static-heart"><path d="M500 190C240 -60 -80 120 60 410C140 600 370 800 500 940C630 800 860 600 940 410C1080 120 760 -60 500 190Z"/></clipPath></defs><image href="assets/hero.webp" x="0" y="0" width="1000" height="1000" preserveAspectRatio="xMidYMin slice" clip-path="url(#static-heart)"/></svg>`;
+heroPhoto.innerHTML=`<svg class="hero-heart-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img" aria-label="Setor and Eunice smiling together"><defs><clipPath id="static-heart"><path d="M500 190C240 -60 -80 120 60 410C140 600 370 800 500 940C630 800 860 600 940 410C1080 120 760 -60 500 190Z"/></clipPath></defs><image href="assets/hero.webp" x="0" y="0" width="1000" height="1000" preserveAspectRatio="xMidYMin slice" clip-path="url(#static-heart)"/></svg>`;
+
+// Match the SVG viewBox to its taller frame while keeping the photo undistorted.
+function sizeStaticHeart(){
+ const svg=heroPhoto.querySelector('svg');const frame=heroPhoto.getBoundingClientRect();
+ if(!svg||!frame.width)return;
+ const height=1000*frame.height/frame.width;
+ svg.setAttribute('viewBox',`0 0 1000 ${height}`);
+ svg.querySelector('clipPath path').setAttribute('transform',`scale(1 ${height/1000})`);
+ svg.querySelector('image').setAttribute('height',String(height));
+}
+sizeStaticHeart();window.addEventListener('resize',sizeStaticHeart,{passive:true});window.addEventListener('load',sizeStaticHeart);
 
 // GSAP ScrollTrigger entrance choreography; no timer-based auto-play.
 if(window.gsap&&window.ScrollTrigger){
